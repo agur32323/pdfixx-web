@@ -5,11 +5,13 @@ export const dynamic = "force-dynamic";
 
 const ILOVE_BASE = "https://api.ilovepdf.com/v1";
 
-async function getToken() {
-  const res = await fetch("http://localhost:3000/api/ilovepdf/auth", {
+async function getToken(req: Request) {
+  const authUrl = new URL("/api/ilovepdf/auth", req.url); // ✅ Vercel'de doğru domain
+  const res = await fetch(authUrl, {
     method: "POST",
     cache: "no-store",
   });
+
   if (!res.ok) throw new Error("Auth token alınamadı");
   const data = await res.json();
   if (!data?.token) throw new Error("Token boş geldi");
@@ -51,8 +53,7 @@ function isValidRanges(r: string) {
 
 export async function POST(req: Request) {
   try {
-    const token = await getToken();
-
+    const token = await getToken(req);
     const form = await req.formData();
     const file = form.get("file") as File | null;
     const rangeRaw = (form.get("range")?.toString() ?? "").trim();
