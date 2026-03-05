@@ -5,7 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 export const metadata: Metadata = {
   title: "PDFixx Web — Merge, Split, Word to PDF",
   description:
-    "PDFixx Web: PDF birleştir, PDF böl, Word → PDF dönüştür. Hızlı ve basit web demo.",
+    "PDFixx Web: PDF birleştir, PDF böl, Word → PDF dönüştür. Hızlı ve basit.",
   icons: {
     icon: "/favicon.ico",
   },
