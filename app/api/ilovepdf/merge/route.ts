@@ -2,9 +2,17 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+type UploadedFile = {
+  server_filename: string;
+  filename: string;
+};
+
 async function getToken() {
   const publicKey = process.env.ILOVEPDF_PUBLIC_KEY;
-  if (!publicKey) throw new Error("ILOVEPDF_PUBLIC_KEY missing");
+
+  if (!publicKey) {
+    throw new Error("ILOVEPDF_PUBLIC_KEY missing");
+  }
 
   const authRes = await fetch("https://api.ilovepdf.com/v1/auth", {
     method: "POST",
@@ -29,7 +37,9 @@ async function getToken() {
 async function startMergeTask(token: string) {
   const taskRes = await fetch("https://api.ilovepdf.com/v1/start/merge", {
     method: "GET",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     cache: "no-store",
   });
 
@@ -73,6 +83,90 @@ function reorderFiles(files: File[], orderRaw: string | null): File[] {
   }
 }
 
+async function uploadFiles(
+  files: File[],
+  task: string,
+  server: string,
+  token: string
+): Promise<UploadedFile[]> {
+  const uploadedFiles: UploadedFile[] = [];
+
+  for (const file of files) {
+    const uploadForm = new FormData();
+    uploadForm.append("task", task);
+    uploadForm.append("file", file, file.name);
+
+    const uploadRes = await fetch(`https://${server}/v1/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: uploadForm,
+    });
+
+    const uploadData = await uploadRes.json();
+
+    if (!uploadRes.ok) {
+      throw new Error(uploadData?.error || "Upload failed");
+    }
+
+    if (!uploadData?.server_filename) {
+      throw new Error("Upload response missing server_filename");
+    }
+
+    uploadedFiles.push({
+      server_filename: uploadData.server_filename,
+      filename: file.name,
+    });
+  }
+
+  return uploadedFiles;
+}
+
+async function processMerge(
+  uploadedFiles: UploadedFile[],
+  task: string,
+  server: string,
+  token: string
+) {
+  const processRes = await fetch(`https://${server}/v1/process`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      task,
+      tool: "merge",
+      files: uploadedFiles,
+    }),
+  });
+
+  const processData = await processRes.json();
+
+  if (!processRes.ok) {
+    throw new Error(processData?.error || "Process failed");
+  }
+
+  return processData;
+}
+
+async function downloadMergedFile(task: string, server: string, token: string) {
+  const downloadRes = await fetch(`https://${server}/v1/download/${task}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!downloadRes.ok) {
+    const txt = await downloadRes.text().catch(() => "");
+    throw new Error(txt || "Download failed");
+  }
+
+  return downloadRes.arrayBuffer();
+}
+
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
@@ -87,74 +181,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Frontend'den order geldiyse o sıraya göre diz
     const files = reorderFiles(rawFiles, orderRaw);
 
     const token = await getToken();
     const { server, task } = await startMergeTask(token);
 
-    const uploadedFiles: Array<{
-      server_filename: string;
-      filename: string;
-    }> = [];
+    const uploadedFiles = await uploadFiles(files, task, server, token);
+    await processMerge(uploadedFiles, task, server, token);
+    const pdfArrayBuffer = await downloadMergedFile(task, server, token);
 
-    for (const file of files) {
-      const uploadForm = new FormData();
-      uploadForm.append("task", task);
-      uploadForm.append("file", file, file.name);
-
-      const uploadRes = await fetch(`https://${server}/v1/upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: uploadForm,
-      });
-
-      const uploadData = await uploadRes.json();
-
-      if (!uploadRes.ok) {
-        throw new Error(uploadData?.error || "Upload failed");
-      }
-
-      uploadedFiles.push({
-        server_filename: uploadData.server_filename,
-        filename: file.name,
-      });
-    }
-
-    const processRes = await fetch(`https://${server}/v1/process`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        task,
-        tool: "merge",
-        files: uploadedFiles,
-      }),
-    });
-
-    const processData = await processRes.json();
-
-    if (!processRes.ok) {
-      throw new Error(processData?.error || "Process failed");
-    }
-
-    const downloadRes = await fetch(`https://${server}/v1/download/${task}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!downloadRes.ok) {
-      const txt = await downloadRes.text().catch(() => "");
-      throw new Error(txt || "Download failed");
-    }
-
-    const pdfArrayBuffer = await downloadRes.arrayBuffer();
     const fileName = `pdfixx_merged_${Date.now()}.pdf`;
 
     return new NextResponse(pdfArrayBuffer, {
