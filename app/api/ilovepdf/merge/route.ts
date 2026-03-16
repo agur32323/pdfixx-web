@@ -49,17 +49,46 @@ async function startMergeTask(token: string) {
   };
 }
 
+function reorderFiles(files: File[], orderRaw: string | null): File[] {
+  if (!orderRaw) return files;
+
+  try {
+    const order = JSON.parse(orderRaw);
+
+    if (!Array.isArray(order)) return files;
+    if (order.length !== files.length) return files;
+
+    const isValid = order.every(
+      (i) => Number.isInteger(i) && i >= 0 && i < files.length
+    );
+
+    if (!isValid) return files;
+
+    const unique = new Set(order);
+    if (unique.size !== files.length) return files;
+
+    return order.map((index: number) => files[index]);
+  } catch {
+    return files;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
-    const files = form.getAll("files") as File[];
 
-    if (!files || files.length < 2) {
+    const rawFiles = form.getAll("files") as File[];
+    const orderRaw = form.get("order")?.toString() ?? null;
+
+    if (!rawFiles || rawFiles.length < 2) {
       return NextResponse.json(
         { error: "En az 2 PDF seçmelisin." },
         { status: 400 }
       );
     }
+
+    // Frontend'den order geldiyse o sıraya göre diz
+    const files = reorderFiles(rawFiles, orderRaw);
 
     const token = await getToken();
     const { server, task } = await startMergeTask(token);
