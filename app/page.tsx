@@ -1,6 +1,6 @@
 "use client";
-import Link from "next/link";
 
+import Link from "next/link";
 import React, { useMemo, useRef, useState } from "react";
 
 type Tool = "merge" | "split" | "wordToPdf";
@@ -36,7 +36,7 @@ export default function Home() {
 
   const helperText =
     activeTool === "merge"
-      ? "Birden fazla PDF seç."
+      ? "Birden fazla PDF seç. İstersen aşağıdaki listeden sıralamayı değiştirebilirsin."
       : activeTool === "split"
       ? "Tek PDF seç, aralığı gir."
       : "Tek Word dosyası seç (.doc/.docx).";
@@ -79,7 +79,9 @@ export default function Home() {
   };
 
   const filterByTool = (list: File[]) => {
-    if (activeTool === "wordToPdf") return list.filter((f) => /\.(docx?|DOCX?)$/.test(f.name));
+    if (activeTool === "wordToPdf") {
+      return list.filter((f) => /\.(docx?|DOCX?)$/.test(f.name));
+    }
     return list.filter((f) => /\.(pdf|PDF)$/.test(f.name));
   };
 
@@ -114,6 +116,25 @@ export default function Home() {
     setDragActive(false);
   };
 
+  const moveFileUp = (index: number) => {
+    if (index === 0) return;
+    const updated = [...files];
+    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+    setFiles(updated);
+  };
+
+  const moveFileDown = (index: number) => {
+    if (index === files.length - 1) return;
+    const updated = [...files];
+    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+    setFiles(updated);
+  };
+
+  const removeFile = (index: number) => {
+    const updated = files.filter((_, i) => i !== index);
+    setFiles(updated);
+  };
+
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -130,14 +151,25 @@ export default function Home() {
       setStatus("En az 2 PDF seçmelisin.");
       return;
     }
+
     setLoading(true);
     setStatus("PDF’ler birleştiriliyor...");
 
     try {
       const fd = new FormData();
-      files.forEach((f) => fd.append("files", f, f.name));
 
-      const res = await fetch("/api/ilovepdf/merge", { method: "POST", body: fd });
+      files.forEach((f) => {
+        fd.append("files", f, f.name);
+      });
+
+      // Ekranda hangi sıradaysa onu gönder
+      fd.append("order", JSON.stringify(files.map((_, i) => i)));
+
+      const res = await fetch("/api/ilovepdf/merge", {
+        method: "POST",
+        body: fd,
+      });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err?.error || "Birleştirme başarısız");
@@ -158,6 +190,7 @@ export default function Home() {
       setStatus("Lütfen bir PDF seç.");
       return;
     }
+
     const r = splitRange.trim();
     if (!r) {
       setStatus("Lütfen sayfa aralığı gir (örn: 1-3,6,8-10).");
@@ -172,7 +205,11 @@ export default function Home() {
       fd.append("file", files[0], files[0].name);
       fd.append("range", r);
 
-      const res = await fetch("/api/ilovepdf/split", { method: "POST", body: fd });
+      const res = await fetch("/api/ilovepdf/split", {
+        method: "POST",
+        body: fd,
+      });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err?.error || "Bölme başarısız");
@@ -196,6 +233,7 @@ export default function Home() {
       setStatus("Lütfen bir Word dosyası seç (.doc/.docx).");
       return;
     }
+
     const name = files[0].name.toLowerCase();
     if (!name.endsWith(".docx") && !name.endsWith(".doc")) {
       setStatus("Word → PDF için .doc/.docx seçmelisin.");
@@ -209,7 +247,11 @@ export default function Home() {
       const fd = new FormData();
       fd.append("file", files[0], files[0].name);
 
-      const res = await fetch("/api/ilovepdf/word-to-pdf", { method: "POST", body: fd });
+      const res = await fetch("/api/ilovepdf/word-to-pdf", {
+        method: "POST",
+        body: fd,
+      });
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err?.error || "Dönüştürme başarısız");
@@ -233,7 +275,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(1200px_circle_at_20%_0%,rgba(0,0,0,0.06),transparent_45%),radial-gradient(900px_circle_at_80%_10%,rgba(0,0,0,0.05),transparent_40%)] bg-zinc-50">
-      {/* Top bar */}
       <header className="sticky top-0 z-10 border-b border-zinc-200/70 bg-white/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -262,7 +303,6 @@ export default function Home() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6 py-10">
-        {/* Hero */}
         <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 shadow-sm">
@@ -276,15 +316,14 @@ export default function Home() {
               <span>📱 Available on iOS</span>
             </div>
 
-            <h1 className="mt-5 text-5xl font-extrabold tracking-tight bg-gradient-to-r from-zinc-950 via-zinc-800 to-zinc-500 bg-clip-text text-transparent">
+            <h1 className="mt-5 bg-gradient-to-r from-zinc-950 via-zinc-800 to-zinc-500 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent">
               PDF işlemlerini saniyeler içinde yap.
             </h1>
 
-            <p className="mt-4 text-zinc-600 leading-relaxed">
+            <p className="mt-4 leading-relaxed text-zinc-600">
               Dosyanı yükle, aracı seç, çıktıyı indir. Temiz ve hızlı bir deneyim.
             </p>
 
-            {/* Segmented control */}
             <div className="mt-7 inline-flex rounded-2xl border border-zinc-200 bg-white p-1 shadow-sm">
               <button
                 onClick={() => changeTool("merge")}
@@ -339,12 +378,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Action Card */}
           <div className="relative">
             <div
               className={`pointer-events-none absolute -inset-1 rounded-[28px] bg-gradient-to-r ${toolMeta.accent} opacity-20 blur-xl`}
             />
-            <div className="relative rounded-[28px] border border-zinc-200 bg-white/70 backdrop-blur-xl p-6 shadow-xl">
+            <div className="relative rounded-[28px] border border-zinc-200 bg-white/70 p-6 shadow-xl backdrop-blur-xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-sm font-semibold text-zinc-900">{toolMeta.title}</div>
@@ -381,7 +419,6 @@ export default function Home() {
                 }`}
               >
                 <div className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl border border-zinc-200 bg-white shadow-sm">
-                  {/* Upload icon */}
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
                     <path
                       d="M12 16V4m0 0 4 4M12 4 8 8"
@@ -417,27 +454,26 @@ export default function Home() {
                   {activeTool === "merge" ? "Birden fazla PDF seçebilirsin." : "Tek dosya seç."}
                 </div>
               </div>
+
               {activeTool === "split" && (
-  <div className="mt-5">
-    <label className="text-xs font-semibold text-zinc-700">
-      Sayfa aralığı (örn: 1-3,6,8-10)
-    </label>
+                <div className="mt-5">
+                  <label className="text-xs font-semibold text-zinc-700">
+                    Sayfa aralığı (örn: 1-3,6,8-10)
+                  </label>
 
-    <input
-      value={splitRange}
-      onChange={(e) => setSplitRange(e.target.value)}
-      placeholder="1-3,6,8-10"
-      className={`mt-2 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm
-        text-zinc-900 placeholder:text-zinc-400
-        caret-zinc-900 outline-none focus:ring-2 ${toolMeta.ring}`}
-      disabled={loading}
-    />
+                  <input
+                    value={splitRange}
+                    onChange={(e) => setSplitRange(e.target.value)}
+                    placeholder="1-3,6,8-10"
+                    className={`mt-2 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 caret-zinc-900 outline-none focus:ring-2 ${toolMeta.ring}`}
+                    disabled={loading}
+                  />
 
-    <p className="mt-2 text-xs text-zinc-500">
-      Virgülle ayır, aralık için “-” kullan.
-    </p>
-  </div>
-)}
+                  <p className="mt-2 text-xs text-zinc-500">
+                    Virgülle ayır, aralık için “-” kullan.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-5">
                 {files.length > 0 ? (
@@ -452,18 +488,63 @@ export default function Home() {
                     </div>
 
                     <ul className="space-y-2">
-                      {files.map((f) => (
-                        <li key={f.name} className="flex items-center justify-between gap-3">
+                      {files.map((f, index) => (
+                        <li
+                          key={`${f.name}-${f.size}-${index}`}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 px-3 py-2"
+                        >
                           <div className="min-w-0">
-                            <div className="truncate text-sm font-medium text-zinc-800">{f.name}</div>
+                            <div className="truncate text-sm font-medium text-zinc-800">
+                              {activeTool === "merge" ? `${index + 1}. ` : ""}
+                              {f.name}
+                            </div>
                             <div className="text-xs text-zinc-500">{formatBytes(f.size)}</div>
                           </div>
-                          <span className="shrink-0 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600">
-                            {activeTool === "wordToPdf" ? "DOC/DOCX" : "PDF"}
-                          </span>
+
+                          <div className="flex items-center gap-2">
+                            {activeTool === "merge" && (
+                              <>
+                                <button
+                                  onClick={() => moveFileUp(index)}
+                                  disabled={index === 0 || loading}
+                                  className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-700 disabled:opacity-40"
+                                >
+                                  ↑
+                                </button>
+
+                                <button
+                                  onClick={() => moveFileDown(index)}
+                                  disabled={index === files.length - 1 || loading}
+                                  className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-zinc-700 disabled:opacity-40"
+                                >
+                                  ↓
+                                </button>
+
+                                <button
+                                  onClick={() => removeFile(index)}
+                                  disabled={loading}
+                                  className="rounded-lg border border-zinc-200 px-2 py-1 text-xs text-red-600 disabled:opacity-40"
+                                >
+                                  Sil
+                                </button>
+                              </>
+                            )}
+
+                            {activeTool !== "merge" && (
+                              <span className="shrink-0 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] text-zinc-600">
+                                {activeTool === "wordToPdf" ? "DOC/DOCX" : "PDF"}
+                              </span>
+                            )}
+                          </div>
                         </li>
                       ))}
                     </ul>
+
+                    {activeTool === "merge" && (
+                      <p className="mt-3 text-xs text-zinc-500">
+                        Birleştirme sırası yukarıdan aşağıya doğrudur. İstersen ↑ ↓ ile sırayı değiştirebilirsin.
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-500">Henüz dosya seçilmedi.</p>
@@ -498,9 +579,37 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="mx-auto mt-16 max-w-3xl text-center">
+          <h2 className="mb-4 text-2xl font-semibold">About PDFixx</h2>
+
+          <p className="text-gray-600">
+            PDFixx is a simple and fast online tool that helps users manage PDF files easily.
+            You can merge multiple PDF documents, split PDF files, and convert Word files to PDF
+            in just a few seconds.
+          </p>
+
+          <p className="mt-3 text-gray-600">
+            Our goal is to provide a clean, fast and privacy-friendly experience.
+            Files are processed quickly and are not stored permanently on our servers.
+          </p>
+        </section>
+
+        <section className="mx-auto mt-12 max-w-3xl text-center">
+          <h2 className="mb-4 text-2xl font-semibold">Why use PDFixx?</h2>
+
+          <ul className="space-y-2 text-gray-600">
+            <li>⚡ Fast PDF processing</li>
+            <li>🔒 Privacy-friendly</li>
+            <li>📄 No account required</li>
+            <li>📱 Works on mobile and desktop</li>
+            <li>🚀 Simple and clean interface</li>
+          </ul>
+        </section>
+
         <footer className="mt-12 border-t border-zinc-200 pt-8 text-sm text-zinc-500">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <p>© {new Date().getFullYear()} PDFixx</p>
+
             <div className="flex gap-4">
               <a
                 className="hover:text-zinc-700"
@@ -510,44 +619,18 @@ export default function Home() {
               >
                 App Store
               </a>
-              <div className="flex gap-4">
-  <Link className="hover:text-zinc-700" href="/contact">
-    Contact
-  </Link>
 
-  <Link className="hover:text-zinc-700" href="/privacy">
-    Privacy
-  </Link>
+              <Link className="hover:text-zinc-700" href="/contact">
+                Contact
+              </Link>
 
-  <Link className="hover:text-zinc-700" href="/terms">
-    Terms
-  </Link>
-  <section className="mt-16 max-w-3xl mx-auto text-center">
-  <h2 className="text-2xl font-semibold mb-4">About PDFixx</h2>
+              <Link className="hover:text-zinc-700" href="/privacy">
+                Privacy
+              </Link>
 
-  <p className="text-gray-600">
-    PDFixx is a simple and fast online tool that helps users manage PDF files easily.
-    You can merge multiple PDF documents, split PDF files, and convert Word files to PDF
-    in just a few seconds.
-  </p>
-
-  <p className="text-gray-600 mt-3">
-    Our goal is to provide a clean, fast and privacy-friendly experience.
-    Files are processed quickly and are not stored permanently on our servers.
-  </p>
-</section>
-<section className="mt-12 max-w-3xl mx-auto text-center">
-  <h2 className="text-2xl font-semibold mb-4">Why use PDFixx?</h2>
-
-  <ul className="text-gray-600 space-y-2">
-    <li>⚡ Fast PDF processing</li>
-    <li>🔒 Privacy-friendly</li>
-    <li>📄 No account required</li>
-    <li>📱 Works on mobile and desktop</li>
-    <li>🚀 Simple and clean interface</li>
-  </ul>
-</section>
-</div>
+              <Link className="hover:text-zinc-700" href="/terms">
+                Terms
+              </Link>
             </div>
           </div>
         </footer>
