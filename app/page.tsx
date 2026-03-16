@@ -522,6 +522,31 @@ export default function Home() {
   <Link className="hover:text-zinc-700" href="/terms">
     Terms
   </Link>
+  <section className="mt-16 max-w-3xl mx-auto text-center">
+  <h2 className="text-2xl font-semibold mb-4">About PDFixx</h2>
+
+  <p className="text-gray-600">
+    PDFixx is a simple and fast online tool that helps users manage PDF files easily.
+    You can merge multiple PDF documents, split PDF files, and convert Word files to PDF
+    in just a few seconds.
+  </p>
+
+  <p className="text-gray-600 mt-3">
+    Our goal is to provide a clean, fast and privacy-friendly experience.
+    Files are processed quickly and are not stored permanently on our servers.
+  </p>
+</section>
+<section className="mt-12 max-w-3xl mx-auto text-center">
+  <h2 className="text-2xl font-semibold mb-4">Why use PDFixx?</h2>
+
+  <ul className="text-gray-600 space-y-2">
+    <li>⚡ Fast PDF processing</li>
+    <li>🔒 Privacy-friendly</li>
+    <li>📄 No account required</li>
+    <li>📱 Works on mobile and desktop</li>
+    <li>🚀 Simple and clean interface</li>
+  </ul>
+</section>
 </div>
             </div>
           </div>
