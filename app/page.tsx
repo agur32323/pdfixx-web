@@ -169,31 +169,68 @@ export default function Home() {
     }
   
     setLoading(true);
-    setStatus("PDF'ler birleştiriliyor...");
   
     try {
-      const fd = new FormData();
-      files.forEach((f) => fd.append("files", f, f.name));
+      // 1. Token + task al (küçük istek, Vercel üzerinden)
+      setStatus("Oturum başlatılıyor...");
+      const initRes = await fetch("/api/ilovepdf/merge");
+      const init = await initRes.json();
+      if (!initRes.ok) throw new Error(init?.error || "Init hatası");
   
-      const res = await fetch("/api/ilovepdf/merge", {
-        method: "POST",
-        body: fd,
-      });
+      const { token, task, server } = init;
+      const base = `https://${server}/v1`;
   
-      // Ham response'u her durumda oku
-      const text = await res.text();
-      console.log("API response:", res.status, text);
+      // 2. Dosyaları direkt iLovePDF'e yükle (Vercel bypass)
+      const uploadedFiles = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        setStatus(`Yükleniyor: ${i + 1}/${files.length} — ${f.name}`);
   
-      if (!res.ok) {
-        let message = "Birleştirme başarısız";
-        try {
-          const err = JSON.parse(text);
-          message = err?.error || err?.message || message;
-        } catch {}
-        throw new Error(`${res.status}: ${message} | RAW: ${text}`);
+        const fd = new FormData();
+        fd.append("task", task);
+        fd.append("file", f, f.name);
+  
+        const upRes = await fetch(`${base}/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+  
+        const upData = await upRes.json();
+        if (!upRes.ok) throw new Error(upData?.error || `Upload hatası: ${f.name}`);
+  
+        uploadedFiles.push({
+          server_filename: upData.server_filename,
+          filename: f.name,
+          rotate: 0,
+          password: "",
+          ranges: "",
+        });
       }
   
-      const blob = new Blob([text], { type: "application/pdf" });
+      // 3. İşlem başlat
+      setStatus("Birleştiriliyor...");
+      const procRes = await fetch(`${base}/process`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ task, tool: "merge", files: uploadedFiles }),
+      });
+  
+      const procData = await procRes.json();
+      if (!procRes.ok) throw new Error(procData?.error || `İşlem hatası (${procRes.status})`);
+  
+      // 4. İndir
+      setStatus("İndiriliyor...");
+      const dlRes = await fetch(`${base}/download/${task}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      if (!dlRes.ok) throw new Error(`İndirme hatası (${dlRes.status})`);
+  
+      const blob = await dlRes.blob();
       downloadBlob(blob, `merged_${Date.now()}.pdf`);
       setStatus("Tamamlandı ✅ PDF indirildi.");
     } catch (e: any) {
