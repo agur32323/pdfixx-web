@@ -36,26 +36,30 @@ export default function Home() {
 
   const helperText =
     activeTool === "merge"
-      ? "Birden fazla PDF seç. İstersen aşağıdaki listeden sıralamayı değiştirebilirsin."
+      ? "Birden fazla PDF seç. Aşağıdaki listeden sıralamayı değiştirebilirsin."
       : activeTool === "split"
       ? "Tek PDF seç, aralığı gir."
       : "Tek Word dosyası seç (.doc/.docx).";
 
   const toolMeta = useMemo(() => {
-    if (activeTool === "merge")
+    if (activeTool === "merge") {
       return {
         title: "PDF Birleştir",
         desc: "Birden fazla PDF’i tek dosyada birleştir.",
         accent: "from-red-500 to-red-600",
         ring: "focus:ring-red-200",
       };
-    if (activeTool === "split")
+    }
+
+    if (activeTool === "split") {
       return {
         title: "PDF Böl",
         desc: "Tek PDF’i sayfa aralığına göre böl.",
         accent: "from-blue-500 to-blue-600",
         ring: "focus:ring-blue-200",
       };
+    }
+
     return {
       title: "Word → PDF",
       desc: "Word belgesini hızlıca PDF’e çevir.",
@@ -107,10 +111,12 @@ export default function Home() {
   };
 
   const onDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
   const onDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(true);
   };
+
   const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setDragActive(false);
@@ -118,6 +124,7 @@ export default function Home() {
 
   const moveFileUp = (index: number) => {
     if (index === 0) return;
+
     const updated = [...files];
     [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
     setFiles(updated);
@@ -125,6 +132,7 @@ export default function Home() {
 
   const moveFileDown = (index: number) => {
     if (index === files.length - 1) return;
+
     const updated = [...files];
     [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
     setFiles(updated);
@@ -162,7 +170,7 @@ export default function Home() {
         fd.append("files", f, f.name);
       });
 
-      // Ekranda hangi sıradaysa onu gönder
+      // Backend order bekliyorsa gönder
       fd.append("order", JSON.stringify(files.map((_, i) => i)));
 
       const res = await fetch("/api/ilovepdf/merge", {
@@ -631,9 +639,18 @@ export default function Home() {
               <Link className="hover:text-zinc-700" href="/terms">
                 Terms
               </Link>
-              <Link href="/about">About</Link>
-  <Link href="/how-to-merge-pdf">Merge Guide</Link>
-  <Link href="/how-to-split-pdf">Split Guide</Link>
+
+              <Link className="hover:text-zinc-700" href="/about">
+                About
+              </Link>
+
+              <Link className="hover:text-zinc-700" href="/how-to-merge-pdf">
+                Merge Guide
+              </Link>
+
+              <Link className="hover:text-zinc-700" href="/how-to-split-pdf">
+                Split Guide
+              </Link>
             </div>
           </div>
         </footer>
