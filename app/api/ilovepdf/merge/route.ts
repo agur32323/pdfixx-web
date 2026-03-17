@@ -87,7 +87,6 @@ async function processMerge(
   server: string,
   token: string
 ) {
-  // iLovePDF API'nin beklediği tam format
   const filesPayload = uploadedFiles.map((f) => ({
     server_filename: f.server_filename,
     filename: f.filename,
@@ -132,6 +131,26 @@ async function downloadMergedFile(task: string, server: string, token: string) {
   return await downloadRes.arrayBuffer();
 }
 
+// -------------------------------------------------------
+// GET — Sadece token + task döndürür (dosya geçmez)
+// Büyük dosyalar için client-side upload akışında kullanılır
+// -------------------------------------------------------
+export async function GET() {
+  try {
+    const token = await getToken();
+    const { server, task } = await startMergeTask(token);
+
+    return NextResponse.json({ token, task, server });
+  } catch (e: any) {
+    console.error("[merge/GET]", e);
+    return NextResponse.json({ error: e?.message ?? "Bilinmeyen hata" }, { status: 500 });
+  }
+}
+
+// -------------------------------------------------------
+// POST — Eskiden kullanılan küçük dosya akışı (4.5 MB altı)
+// Büyük dosyalarda 413 verir, o durumda client GET akışına geçer
+// -------------------------------------------------------
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
@@ -156,7 +175,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (e: any) {
-    console.error("[merge]", e);
+    console.error("[merge/POST]", e);
     return NextResponse.json({ error: e?.message ?? "Bilinmeyen hata" }, { status: 500 });
   }
 }
