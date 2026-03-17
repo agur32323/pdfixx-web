@@ -167,28 +167,33 @@ export default function Home() {
       setStatus("En az 2 PDF seçmelisin.");
       return;
     }
-
+  
     setLoading(true);
     setStatus("PDF’ler birleştiriliyor...");
-
+  
     try {
       const fd = new FormData();
-
-      // Ekranda hangi sıradaysa o sırayla gönder
+  
       files.forEach((f) => {
         fd.append("files", f, f.name);
       });
-
+  
       const res = await fetch("/api/ilovepdf/merge", {
         method: "POST",
         body: fd,
       });
-
+  
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error || "Birleştirme başarısız");
+        let message = "Birleştirme başarısız";
+  
+        try {
+          const err = await res.json();
+          message = err?.error || err?.message || message;
+        } catch {}
+  
+        throw new Error(message);
       }
-
+  
       const blob = await res.blob();
       downloadBlob(blob, `merged_${Date.now()}.pdf`);
       setStatus("Tamamlandı ✅ PDF indirildi.");

@@ -7,7 +7,7 @@ type UploadedFile = {
   filename: string;
 };
 
-async function getJsonSafe(res: Response) {
+async function safeJson(res: Response) {
   try {
     return await res.json();
   } catch {
@@ -15,7 +15,7 @@ async function getJsonSafe(res: Response) {
   }
 }
 
-async function getTextSafe(res: Response) {
+async function safeText(res: Response) {
   try {
     return await res.text();
   } catch {
@@ -37,7 +37,7 @@ async function getToken() {
     cache: "no-store",
   });
 
-  const authData = await getJsonSafe(authRes);
+  const authData = await safeJson(authRes);
 
   if (!authRes.ok) {
     throw new Error(authData?.error || authData?.message || "Auth failed");
@@ -59,7 +59,7 @@ async function startMergeTask(token: string) {
     cache: "no-store",
   });
 
-  const taskData = await getJsonSafe(taskRes);
+  const taskData = await safeJson(taskRes);
 
   if (!taskRes.ok) {
     throw new Error(taskData?.error || taskData?.message || "Start task failed");
@@ -96,7 +96,7 @@ async function uploadFiles(
       body: uploadForm,
     });
 
-    const uploadData = await getJsonSafe(uploadRes);
+    const uploadData = await safeJson(uploadRes);
 
     if (!uploadRes.ok) {
       throw new Error(uploadData?.error || uploadData?.message || "Upload failed");
@@ -134,7 +134,7 @@ async function processMerge(
     }),
   });
 
-  const processData = await getJsonSafe(processRes);
+  const processData = await safeJson(processRes);
 
   if (!processRes.ok) {
     throw new Error(processData?.error || processData?.message || "Process failed");
@@ -151,7 +151,7 @@ async function downloadMergedFile(task: string, server: string, token: string) {
   });
 
   if (!downloadRes.ok) {
-    const txt = await getTextSafe(downloadRes);
+    const txt = await safeText(downloadRes);
     throw new Error(txt || "Download failed");
   }
 
@@ -173,7 +173,7 @@ export async function POST(req: Request) {
     const token = await getToken();
     const { server, task } = await startMergeTask(token);
 
-    // Frontend hangi sırada append ettiyse o sırayla gider
+    // Frontend hangi sırada gönderirse o sırayla merge edilir
     const uploadedFiles = await uploadFiles(files, task, server, token);
     await processMerge(uploadedFiles, task, server, token);
 
