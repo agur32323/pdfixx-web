@@ -7,7 +7,7 @@ type UploadedFile = {
   filename: string;
 };
 
-async function safeJson(res: Response) {
+async function getJsonSafe(res: Response) {
   try {
     return await res.json();
   } catch {
@@ -15,7 +15,7 @@ async function safeJson(res: Response) {
   }
 }
 
-async function safeText(res: Response) {
+async function getTextSafe(res: Response) {
   try {
     return await res.text();
   } catch {
@@ -37,10 +37,10 @@ async function getToken() {
     cache: "no-store",
   });
 
-  const authData = await safeJson(authRes);
+  const authData = await getJsonSafe(authRes);
 
   if (!authRes.ok) {
-    throw new Error(authData?.error || "Auth failed");
+    throw new Error(authData?.error || authData?.message || "Auth failed");
   }
 
   if (!authData?.token) {
@@ -59,10 +59,10 @@ async function startMergeTask(token: string) {
     cache: "no-store",
   });
 
-  const taskData = await safeJson(taskRes);
+  const taskData = await getJsonSafe(taskRes);
 
   if (!taskRes.ok) {
-    throw new Error(taskData?.error || "Start task failed");
+    throw new Error(taskData?.error || taskData?.message || "Start task failed");
   }
 
   if (!taskData?.server || !taskData?.task) {
@@ -73,30 +73,6 @@ async function startMergeTask(token: string) {
     server: taskData.server as string,
     task: taskData.task as string,
   };
-}
-
-function reorderFiles(files: File[], orderRaw: string | null): File[] {
-  if (!orderRaw) return files;
-
-  try {
-    const order = JSON.parse(orderRaw);
-
-    if (!Array.isArray(order)) return files;
-    if (order.length !== files.length) return files;
-
-    const isValid = order.every(
-      (i) => Number.isInteger(i) && i >= 0 && i < files.length
-    );
-
-    if (!isValid) return files;
-
-    const unique = new Set(order);
-    if (unique.size !== files.length) return files;
-
-    return order.map((index: number) => files[index]);
-  } catch {
-    return files;
-  }
 }
 
 async function uploadFiles(
@@ -120,16 +96,10 @@ async function uploadFiles(
       body: uploadForm,
     });
 
-    const uploadData = await safeJson(uploadRes);
-    const uploadText = await safeText(uploadRes.clone());
+    const uploadData = await getJsonSafe(uploadRes);
 
     if (!uploadRes.ok) {
-      throw new Error(
-        uploadData?.error ||
-          uploadData?.message ||
-          uploadText ||
-          "Upload failed"
-      );
+      throw new Error(uploadData?.error || uploadData?.message || "Upload failed");
     }
 
     if (!uploadData?.server_filename) {
@@ -161,24 +131,14 @@ async function processMerge(
       task,
       tool: "merge",
       files: uploadedFiles,
-      packaged_filename: "pdfixx_merge_result",
-      ignore_errors: false,
     }),
   });
 
-  const processData = await safeJson(processRes);
-  const processText = await safeText(processRes.clone());
+  const processData = await getJsonSafe(processRes);
 
   if (!processRes.ok) {
-    throw new Error(
-      processData?.error ||
-        processData?.message ||
-        processText ||
-        "Process failed"
-    );
+    throw new Error(processData?.error || processData?.message || "Process failed");
   }
-
-  return processData;
 }
 
 async function downloadMergedFile(task: string, server: string, token: string) {
@@ -191,43 +151,33 @@ async function downloadMergedFile(task: string, server: string, token: string) {
   });
 
   if (!downloadRes.ok) {
-    const txt = await safeText(downloadRes);
+    const txt = await getTextSafe(downloadRes);
     throw new Error(txt || "Download failed");
   }
 
-  const contentType = downloadRes.headers.get("content-type") || "";
-
-  if (!contentType.includes("pdf") && !contentType.includes("octet-stream")) {
-    const txt = await safeText(downloadRes.clone());
-    throw new Error(txt || "Downloaded file is not a PDF");
-  }
-
-  return downloadRes.arrayBuffer();
+  return await downloadRes.arrayBuffer();
 }
 
 export async function POST(req: Request) {
   try {
     const form = await req.formData();
+    const files = form.getAll("files") as File[];
 
-    const rawFiles = form.getAll("files") as File[];
-    const orderRaw = form.get("order")?.toString() ?? null;
-
-    if (!rawFiles || rawFiles.length < 2) {
+    if (!files || files.length < 2) {
       return NextResponse.json(
         { error: "En az 2 PDF seçmelisin." },
         { status: 400 }
       );
     }
 
-    const files = reorderFiles(rawFiles, orderRaw);
-
     const token = await getToken();
     const { server, task } = await startMergeTask(token);
 
+    // Frontend hangi sırada append ettiyse o sırayla gider
     const uploadedFiles = await uploadFiles(files, task, server, token);
     await processMerge(uploadedFiles, task, server, token);
-    const pdfArrayBuffer = await downloadMergedFile(task, server, token);
 
+    const pdfArrayBuffer = await downloadMergedFile(task, server, token);
     const fileName = `pdfixx_merged_${Date.now()}.pdf`;
 
     return new NextResponse(pdfArrayBuffer, {
