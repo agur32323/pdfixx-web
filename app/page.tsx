@@ -631,6 +631,9 @@ export default function Home() {
               <Link className="hover:text-zinc-700" href="/terms">
                 Terms
               </Link>
+              <Link href="/about">About</Link>
+  <Link href="/how-to-merge-pdf">Merge Guide</Link>
+  <Link href="/how-to-split-pdf">Split Guide</Link>
             </div>
           </div>
         </footer>
