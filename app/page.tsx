@@ -169,32 +169,31 @@ export default function Home() {
     }
   
     setLoading(true);
-    setStatus("PDF’ler birleştiriliyor...");
+    setStatus("PDF'ler birleştiriliyor...");
   
     try {
       const fd = new FormData();
-  
-      files.forEach((f) => {
-        fd.append("files", f, f.name);
-      });
+      files.forEach((f) => fd.append("files", f, f.name));
   
       const res = await fetch("/api/ilovepdf/merge", {
         method: "POST",
         body: fd,
       });
   
+      // Ham response'u her durumda oku
+      const text = await res.text();
+      console.log("API response:", res.status, text);
+  
       if (!res.ok) {
         let message = "Birleştirme başarısız";
-  
         try {
-          const err = await res.json();
+          const err = JSON.parse(text);
           message = err?.error || err?.message || message;
         } catch {}
-  
-        throw new Error(message);
+        throw new Error(`${res.status}: ${message} | RAW: ${text}`);
       }
   
-      const blob = await res.blob();
+      const blob = new Blob([text], { type: "application/pdf" });
       downloadBlob(blob, `merged_${Date.now()}.pdf`);
       setStatus("Tamamlandı ✅ PDF indirildi.");
     } catch (e: any) {
