@@ -7,6 +7,22 @@ type UploadedFile = {
   filename: string;
 };
 
+async function safeJson(res: Response) {
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+async function safeText(res: Response) {
+  try {
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
 async function getToken() {
   const publicKey = process.env.ILOVEPDF_PUBLIC_KEY;
 
@@ -21,7 +37,7 @@ async function getToken() {
     cache: "no-store",
   });
 
-  const authData = await authRes.json();
+  const authData = await safeJson(authRes);
 
   if (!authRes.ok) {
     throw new Error(authData?.error || "Auth failed");
@@ -43,7 +59,7 @@ async function startMergeTask(token: string) {
     cache: "no-store",
   });
 
-  const taskData = await taskRes.json();
+  const taskData = await safeJson(taskRes);
 
   if (!taskRes.ok) {
     throw new Error(taskData?.error || "Start task failed");
@@ -104,10 +120,16 @@ async function uploadFiles(
       body: uploadForm,
     });
 
-    const uploadData = await uploadRes.json();
+    const uploadData = await safeJson(uploadRes);
+    const uploadText = await safeText(uploadRes.clone());
 
     if (!uploadRes.ok) {
-      throw new Error(uploadData?.error || "Upload failed");
+      throw new Error(
+        uploadData?.error ||
+          uploadData?.message ||
+          uploadText ||
+          "Upload failed"
+      );
     }
 
     if (!uploadData?.server_filename) {
@@ -139,13 +161,21 @@ async function processMerge(
       task,
       tool: "merge",
       files: uploadedFiles,
+      packaged_filename: "pdfixx_merge_result",
+      ignore_errors: false,
     }),
   });
 
-  const processData = await processRes.json();
+  const processData = await safeJson(processRes);
+  const processText = await safeText(processRes.clone());
 
   if (!processRes.ok) {
-    throw new Error(processData?.error || "Process failed");
+    throw new Error(
+      processData?.error ||
+        processData?.message ||
+        processText ||
+        "Process failed"
+    );
   }
 
   return processData;
@@ -157,11 +187,19 @@ async function downloadMergedFile(task: string, server: string, token: string) {
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    cache: "no-store",
   });
 
   if (!downloadRes.ok) {
-    const txt = await downloadRes.text().catch(() => "");
+    const txt = await safeText(downloadRes);
     throw new Error(txt || "Download failed");
+  }
+
+  const contentType = downloadRes.headers.get("content-type") || "";
+
+  if (!contentType.includes("pdf") && !contentType.includes("octet-stream")) {
+    const txt = await safeText(downloadRes.clone());
+    throw new Error(txt || "Downloaded file is not a PDF");
   }
 
   return downloadRes.arrayBuffer();
