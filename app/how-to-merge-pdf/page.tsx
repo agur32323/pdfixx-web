@@ -25,6 +25,10 @@ export default function MergeGuidePage() {
       <p className="mb-4">
         Our tool processes files quickly and securely, ensuring a smooth experience without unnecessary steps.
       </p>
+      <p className="text-gray-600 mt-4">
+  Merging PDF files is useful when you want to combine multiple documents into a single file.
+  This helps in organizing reports, assignments, and documents efficiently.
+</p>
     </main>
   );
 }

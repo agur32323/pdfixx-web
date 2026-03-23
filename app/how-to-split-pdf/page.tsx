@@ -24,6 +24,10 @@ export default function SplitGuidePage() {
       <p className="mb-4">
         PDFixx ensures that your files are processed securely and quickly without storing them permanently.
       </p>
+      <p className="text-gray-600 mt-4">
+  Splitting PDF files allows you to extract specific pages or sections from a document.
+  This is useful when you only need certain parts of a file.
+</p>
     </main>
   );
 }

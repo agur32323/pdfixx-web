@@ -652,6 +652,32 @@ export default function Home() {
             <li>🚀 Simple and clean interface</li>
           </ul>
         </section>
+        <section className="mt-16 max-w-3xl mx-auto text-center">
+  <h2 className="text-2xl font-semibold mb-4">How it works</h2>
+
+  <p className="text-gray-600">
+    PDFixx allows you to process your files quickly and securely. 
+    Simply upload your PDF or Word file, choose the tool you want to use, 
+    and download your processed file instantly.
+  </p>
+
+  <p className="text-gray-600 mt-3">
+    All files are processed temporarily and are not stored permanently. 
+    This ensures your privacy and data security at all times.
+  </p>
+</section>
+
+<section className="mt-12 max-w-3xl mx-auto text-center">
+  <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
+
+  <div className="text-gray-600 space-y-4 text-left">
+    <p><strong>Is PDFixx free?</strong><br/>Yes, basic features are free to use.</p>
+
+    <p><strong>Are my files सुरक्षित?</strong><br/>Yes, files are processed securely and not stored.</p>
+
+    <p><strong>Can I use it on mobile?</strong><br/>Yes, PDFixx works on both desktop and mobile devices.</p>
+  </div>
+</section>
 
         <footer className="mt-12 border-t border-zinc-200 pt-8 text-sm text-zinc-500">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -690,6 +716,7 @@ export default function Home() {
               <Link className="hover:text-zinc-700" href="/how-to-split-pdf">
                 Split Guide
               </Link>
+              <Link className="hover:text-zinc-700" href="/how-to-convert-word-to-pdf">Word → PDF Guide</Link>
             </div>
           </div>
         </footer>
