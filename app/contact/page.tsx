@@ -1,9 +1,9 @@
 export default function ContactPage() {
-  const email = "agur32323@gmail.com"; // burayı değiştirince hem link hem yazı değişir
+  const email = "agur32323@gmail.com";
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-bold mb-6">Contact</h1>
+      <h1 className="mb-6 text-3xl font-bold">Contact</h1>
 
       <p className="mb-4 text-zinc-600">
         If you have questions, feedback, or need support, feel free to contact us.

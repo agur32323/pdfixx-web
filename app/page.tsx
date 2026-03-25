@@ -23,8 +23,6 @@ export default function Home() {
   const [activeTool, setActiveTool] = useState<Tool>("merge");
   const [splitRange, setSplitRange] = useState<string>("1-3");
   const [dragActive, setDragActive] = useState<boolean>(false);
-
-  // Liste içi sürükleme için
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const accept = useMemo(() => {
@@ -167,38 +165,46 @@ export default function Home() {
       setStatus("En az 2 PDF seçmelisin.");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
-      // 1. Token + task al (küçük istek, Vercel üzerinden)
       setStatus("Oturum başlatılıyor...");
+
       const initRes = await fetch("/api/ilovepdf/merge");
       const init = await initRes.json();
-      if (!initRes.ok) throw new Error(init?.error || "Init hatası");
-  
+
+      if (!initRes.ok) {
+        throw new Error(init?.error || "Init hatası");
+      }
+
       const { token, task, server } = init;
       const base = `https://${server}/v1`;
-  
-      // 2. Dosyaları direkt iLovePDF'e yükle (Vercel bypass)
+
       const uploadedFiles = [];
+
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
         setStatus(`Yükleniyor: ${i + 1}/${files.length} — ${f.name}`);
-  
+
         const fd = new FormData();
         fd.append("task", task);
         fd.append("file", f, f.name);
-  
+
         const upRes = await fetch(`${base}/upload`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           body: fd,
         });
-  
+
         const upData = await upRes.json();
-        if (!upRes.ok) throw new Error(upData?.error || `Upload hatası: ${f.name}`);
-  
+
+        if (!upRes.ok) {
+          throw new Error(upData?.error || `Upload hatası: ${f.name}`);
+        }
+
         uploadedFiles.push({
           server_filename: upData.server_filename,
           filename: f.name,
@@ -207,29 +213,40 @@ export default function Home() {
           ranges: "",
         });
       }
-  
-      // 3. İşlem başlat
+
       setStatus("Birleştiriliyor...");
+
       const procRes = await fetch(`${base}/process`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ task, tool: "merge", files: uploadedFiles }),
+        body: JSON.stringify({
+          task,
+          tool: "merge",
+          files: uploadedFiles,
+        }),
       });
-  
+
       const procData = await procRes.json();
-      if (!procRes.ok) throw new Error(procData?.error || `İşlem hatası (${procRes.status})`);
-  
-      // 4. İndir
+
+      if (!procRes.ok) {
+        throw new Error(procData?.error || `İşlem hatası (${procRes.status})`);
+      }
+
       setStatus("İndiriliyor...");
+
       const dlRes = await fetch(`${base}/download/${task}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-  
-      if (!dlRes.ok) throw new Error(`İndirme hatası (${dlRes.status})`);
-  
+
+      if (!dlRes.ok) {
+        throw new Error(`İndirme hatası (${dlRes.status})`);
+      }
+
       const blob = await dlRes.blob();
       downloadBlob(blob, `merged_${Date.now()}.pdf`);
       setStatus("Tamamlandı ✅ PDF indirildi.");
@@ -652,32 +669,57 @@ export default function Home() {
             <li>🚀 Simple and clean interface</li>
           </ul>
         </section>
-        <section className="mt-16 max-w-3xl mx-auto text-center">
-  <h2 className="text-2xl font-semibold mb-4">How it works</h2>
 
-  <p className="text-gray-600">
-    PDFixx allows you to process your files quickly and securely. 
-    Simply upload your PDF or Word file, choose the tool you want to use, 
-    and download your processed file instantly.
-  </p>
+        <section className="mx-auto mt-16 max-w-3xl text-center">
+          <h2 className="mb-4 text-2xl font-semibold">How it works</h2>
+          <p className="text-gray-600">
+            PDFixx allows you to process your files quickly and securely.
+            Simply upload your PDF or Word file, choose the tool you want to use,
+            and download your processed file instantly.
+          </p>
+          <p className="mt-3 text-gray-600">
+            All files are processed temporarily and are not stored permanently.
+            This ensures your privacy and data security at all times.
+          </p>
+        </section>
 
-  <p className="text-gray-600 mt-3">
-    All files are processed temporarily and are not stored permanently. 
-    This ensures your privacy and data security at all times.
-  </p>
-</section>
+        <section className="mx-auto mt-12 max-w-3xl text-center">
+          <h2 className="mb-4 text-2xl font-semibold">Frequently Asked Questions</h2>
 
-<section className="mt-12 max-w-3xl mx-auto text-center">
-  <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
+          <div className="space-y-4 text-left text-gray-600">
+            <p>
+              <strong>Is PDFixx free?</strong>
+              <br />
+              Yes, basic features are free to use.
+            </p>
 
-  <div className="text-gray-600 space-y-4 text-left">
-    <p><strong>Is PDFixx free?</strong><br/>Yes, basic features are free to use.</p>
+            <p>
+              <strong>Are my files secure?</strong>
+              <br />
+              Yes, files are processed securely and not stored permanently.
+            </p>
 
-    <p><strong>Are my files सुरक्षित?</strong><br/>Yes, files are processed securely and not stored.</p>
+            <p>
+              <strong>Can I use it on mobile?</strong>
+              <br />
+              Yes, PDFixx works on both desktop and mobile devices.
+            </p>
+          </div>
+        </section>
 
-    <p><strong>Can I use it on mobile?</strong><br/>Yes, PDFixx works on both desktop and mobile devices.</p>
-  </div>
-</section>
+        <section className="mx-auto mt-16 max-w-3xl text-center">
+          <h2 className="mb-4 text-2xl font-semibold">What is PDFixx?</h2>
+
+          <p className="text-gray-600">
+            PDFixx is an online PDF tool that allows users to merge, split, and convert documents quickly.
+            It is designed to provide a fast and simple experience without requiring account registration.
+          </p>
+
+          <p className="mt-3 text-gray-600">
+            Unlike many other tools, PDFixx does not store your files permanently.
+            All files are processed securely and automatically deleted after processing.
+          </p>
+        </section>
 
         <footer className="mt-12 border-t border-zinc-200 pt-8 text-sm text-zinc-500">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -716,7 +758,10 @@ export default function Home() {
               <Link className="hover:text-zinc-700" href="/how-to-split-pdf">
                 Split Guide
               </Link>
-              <Link className="hover:text-zinc-700" href="/how-to-convert-word-to-pdf">Word → PDF Guide</Link>
+
+              <Link className="hover:text-zinc-700" href="/how-to-convert-word-to-pdf">
+                Word → PDF Guide
+              </Link>
             </div>
           </div>
         </footer>

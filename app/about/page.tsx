@@ -23,6 +23,8 @@ export default function AboutPage() {
         PDFixx is continuously improving with new features and optimizations to deliver the best experience
         for both desktop and mobile users.
       </p>
+      <p>PDFixx aims to provide simple, fast, and privacy-friendly tools for document processing.
+      Users can perform operations such as merging, splitting, and converting files easily.</p>
     </main>
   );
 }

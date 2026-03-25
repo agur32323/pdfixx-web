@@ -20,6 +20,8 @@ export default function PrivacyPage() {
         <p>
           If you have any questions, please contact us.
         </p>
+        <p>We do not store your files permanently.
+        All uploaded files are automatically deleted after processing.</p>
       </main>
     );
   }
