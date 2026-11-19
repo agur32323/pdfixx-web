@@ -1,15 +1,16 @@
 "use client";
 
-import { Camera, ImagePlus, X } from "lucide-react";
+import { Camera, Crop, ImagePlus, X } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { useT } from "@/lib/i18n";
 import { imagesToPdf, type ImagePdfOptions } from "@/lib/pdf/engine";
 import type { ToolDef } from "@/lib/tools";
 
+import { ScanEditor } from "../scan-editor";
 import { Sortable } from "../sortable";
 import { AddMore, type InputFile, OptionCard, pdfBlob, ToolScaffold, useInputs, useJob } from "../tool-kit";
-import { Button, cx, IconButton, Segmented, useObjectUrl } from "../ui";
+import { Button, cx, IconButton, Segmented, Sheet, useObjectUrl } from "../ui";
 
 function ImageThumb({ input }: { input: InputFile }) {
   const url = useObjectUrl(input.file);
@@ -31,6 +32,21 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
   const gallery = useRef<HTMLInputElement>(null);
   const [opts, setOpts] = useState<ImagePdfOptions>({ pageSize: "a4", orientation: "auto", margin: scan ? "none" : "small" });
   const set = <K extends keyof ImagePdfOptions>(k: K, v: ImagePdfOptions[K]) => setOpts((o) => ({ ...o, [k]: v }));
+  // Scanning sends every new photo through the editor first; photos can also be fixed later.
+  const [queue, setQueue] = useState<File[]>([]);
+  const [editKey, setEditKey] = useState<string | null>(null);
+  const editing = editKey ? inputs.find((i) => i.key === editKey)?.file : queue[0];
+  const take = (files: File[]) => (scan ? setQueue((q) => [...q, ...files]) : void add(files));
+  const editorDone = (file: File) => {
+    if (editKey) {
+      setInputs((list) => list.map((i) => (i.key === editKey ? { ...i, file } : i)));
+      setEditKey(null);
+    } else {
+      void add([file]);
+      setQueue((q) => q.slice(1));
+    }
+  };
+  const editorCancel = () => (editKey ? setEditKey(null) : setQueue((q) => q.slice(1)));
 
   const run = () =>
     job.run(async (c) => {
@@ -55,7 +71,7 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
         onChange={(e) => {
           const f = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (f.length) void add(f);
+          if (f.length) take(f);
         }}
       />
       <input
@@ -67,7 +83,7 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
         onChange={(e) => {
           const f = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (f.length) void add(f);
+          if (f.length) take(f);
         }}
       />
     </>
@@ -88,7 +104,7 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
           onDrop={(e) => {
             e.preventDefault();
             const f = Array.from(e.dataTransfer.files).filter((x) => x.type.startsWith("image/"));
-            if (f.length) void add(f);
+            if (f.length) take(f);
           }}
         >
           <span className="mb-4 grid size-14 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--to-pdf)_14%,transparent)] text-[color:var(--to-pdf)]">
@@ -114,6 +130,14 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
                 <ImageThumb input={input} />
                 <span className="absolute bottom-3 left-3 grid size-6 place-items-center rounded-full bg-black/60 text-[12px] font-bold text-white">{i + 1}</span>
                 <IconButton
+                  label={t("webScanEdit")}
+                  className="absolute right-2.5 bottom-2.5 size-8 bg-white/90 text-fg shadow hover:bg-white"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => setEditKey(input.key)}
+                >
+                  <Crop className="size-4" />
+                </IconButton>
+                <IconButton
                   label={t("remove")}
                   className="absolute top-2.5 right-2.5 size-7 bg-black/55 text-white hover:bg-black/70 hover:text-white"
                   onPointerDown={(e) => e.stopPropagation()}
@@ -128,7 +152,7 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
             <Button variant="secondary" icon={<Camera className="size-5" />} onClick={() => camera.current?.click()}>
               {t("sourceCamera")}
             </Button>
-            <AddMore accept="image/*" onFiles={add} />
+            <AddMore accept="image/*" onFiles={take} />
           </div>
           <p className="text-[13px] text-fg-2">{t("mergeReorderHint")}</p>
           <OptionCard title={t("pageSize")}>
@@ -168,6 +192,9 @@ export default function ImagesTool({ tool }: { tool: ToolDef }) {
           </OptionCard>
         </div>
       )}
+      <Sheet open={!!editing} onClose={editorCancel} title={t("webScanTitle")} wide>
+        {editing && <ScanEditor key={editKey ?? `${queue.length}:${editing.name}:${editing.lastModified}`} file={editing} onDone={editorDone} onCancel={editorCancel} />}
+      </Sheet>
     </ToolScaffold>
   );
 }

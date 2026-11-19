@@ -23,7 +23,8 @@ export default function SplitTool({ tool }: { tool: ToolDef }) {
   const [mode, setMode] = useState<Mode>("ranges");
   const [ranges, setRanges] = useState("");
   const [mergeRanges, setMergeRanges] = useState(false);
-  const [every, setEvery] = useState(2);
+  const [everyText, setEvery] = useState("2");
+  const every = Math.max(1, Math.min(total || 1, Math.round(Number(everyText)) || 1));
   const [picked, setPicked] = useState<number[]>([]);
 
   const [forFile, setForFile] = useState(input);
@@ -115,9 +116,9 @@ export default function SplitTool({ tool }: { tool: ToolDef }) {
                   type="number"
                   min={1}
                   max={total}
-                  value={every}
+                  value={everyText}
                   inputMode="numeric"
-                  onChange={(e) => setEvery(Math.max(1, Math.min(total, Number(e.target.value) || 1)))}
+                  onChange={(e) => setEvery(e.target.value)}
                 />
               </Field>
             </OptionCard>

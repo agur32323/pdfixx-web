@@ -74,7 +74,7 @@ function Hero({ onFiles }: { onFiles: (f: File[]) => void }) {
   const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
-  const popular = ["merge", "compress", "word_pdf", "sign", "pdf_word", "split"].map((id) => toolById(id)!);
+  const popular = ["merge", "compress", "image_compress", "imagepdf", "sign", "split"].map((id) => toolById(id)!);
   return (
     <section className="relative overflow-hidden">
       <div className="hero-glow pointer-events-none absolute inset-0" />
