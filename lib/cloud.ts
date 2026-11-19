@@ -141,9 +141,12 @@ export async function ilovepdf(
   return download(`https://${server}/v1/download/${task}`, { headers: auth, signal: o.signal }, (f) => o.onProgress?.(0.8 + f * 0.2));
 }
 
-export async function convertApi(
-  o: { endpoint: "pdf/to/docx" | "pdf/to/xlsx" | "pdf/to/pptx"; file: File; password?: string; ocrLanguage?: "tr" | "en" } & CloudCallbacks,
-): Promise<Blob> {
+export type ConvertEndpoint = "pdf/to/docx" | "pdf/to/xlsx" | "pdf/to/pptx" | `${"dwg" | "dxf" | "dwf"}/to/${"pdf" | "png" | "jpg" | "svg"}`;
+
+/** Converts with ConvertAPI; a drawing with several layouts can come back as several files. */
+export async function convertApiFiles(
+  o: { endpoint: ConvertEndpoint; file: File; password?: string; ocrLanguage?: "tr" | "en"; options?: Record<string, unknown> } & CloudCallbacks,
+): Promise<{ blob: Blob; name: string }[]> {
   o.onStage?.("upload");
   const up = JSON.parse(
     await upload(`https://v2.convertapi.com/upload?filename=${encodeURIComponent(o.file.name)}`, o.file, {
@@ -154,13 +157,22 @@ export async function convertApi(
 
   o.onStage?.("process");
   o.onProgress?.(0.6);
-  const { url } = await call<{ url: string }>(
+  const { files } = await call<{ files: { url: string; fileName: string }[] }>(
     "/api/cloud/convert",
-    { endpoint: o.endpoint, fileId: up.FileId, password: o.password, ocrLanguage: o.ocrLanguage },
+    { endpoint: o.endpoint, fileId: up.FileId, password: o.password, ocrLanguage: o.ocrLanguage, options: o.options },
     o.signal,
   );
 
   o.onStage?.("download");
-  o.onProgress?.(0.85);
-  return download(url, { signal: o.signal }, (f) => o.onProgress?.(0.85 + f * 0.15));
+  const out: { blob: Blob; name: string }[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const base = 0.85 + (0.15 * i) / files.length;
+    const blob = await download(files[i].url, { signal: o.signal }, (f) => o.onProgress?.(base + (f * 0.15) / files.length));
+    out.push({ blob, name: files[i].fileName });
+  }
+  return out;
+}
+
+export async function convertApi(o: Parameters<typeof convertApiFiles>[0]): Promise<Blob> {
+  return (await convertApiFiles(o))[0].blob;
 }

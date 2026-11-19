@@ -127,7 +127,7 @@ function Hero({ onFiles }: { onFiles: (f: File[]) => void }) {
             <input
               ref={input}
               type="file"
-              accept="application/pdf,.pdf,image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              accept="application/pdf,.pdf,image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.dwg,.dxf,.dwf"
               multiple
               hidden
               onChange={(e) => {
@@ -366,7 +366,14 @@ export function HomeScreen() {
     } else if (files.length) {
       const ext = files[0].name.split(".").pop()?.toLowerCase() ?? "";
       handOff([files[0]]);
-      router.push(toolHref(["xls", "xlsx", "ods"].includes(ext) ? "excel_pdf" : ["ppt", "pptx", "odp"].includes(ext) ? "ppt_pdf" : "word_pdf"));
+      const tool = ["dwg", "dxf", "dwf"].includes(ext)
+        ? "dwg_pdf"
+        : ["xls", "xlsx", "ods"].includes(ext)
+          ? "excel_pdf"
+          : ["ppt", "pptx", "odp"].includes(ext)
+            ? "ppt_pdf"
+            : "word_pdf";
+      router.push(toolHref(tool));
     }
   };
 

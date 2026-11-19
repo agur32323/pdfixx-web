@@ -164,6 +164,8 @@ export async function ask(
     ...(o.targetLanguage ? { targetLanguage: o.targetLanguage } : {}),
     ...(o.pageRange ? { pageRange: o.pageRange } : {}),
     uiLanguage: o.uiLanguage,
+    // Counted in the website's shared daily allowance (see the function).
+    client: "web",
   };
   try {
     const { stream, data } = await fn.stream(payload, { signal: o.signal });

@@ -31,7 +31,7 @@ const tr = (
     </p>
 
     <h2>2. Bulut dönüştürme araçları</h2>
-    <p>Word, Excel ve PowerPoint ile PDF arasında dönüştürme, OCR (metin tanıma), PDF onarma ve bulutta sıkıştırma için dosyan tarayıcından doğrudan şu hizmet sağlayıcılara şifreli bağlantıyla gönderilir:</p>
+    <p>Word, Excel ve PowerPoint ile PDF arasında dönüştürme, CAD çizimlerinin (DWG, DXF, DWF) dönüştürülmesi, OCR (metin tanıma), PDF onarma ve bulutta sıkıştırma için dosyan tarayıcından doğrudan şu hizmet sağlayıcılara şifreli bağlantıyla gönderilir:</p>
     <ul>
       <li>
         iLovePDF (İspanya): <a href="https://www.ilovepdf.com/help/privacy">gizlilik politikası</a>
@@ -111,7 +111,7 @@ const en = (
     </p>
 
     <h2>2. Cloud conversion tools</h2>
-    <p>For Word, Excel and PowerPoint ↔ PDF conversion, OCR (text recognition), PDF repair and cloud compression, your file is sent from your browser straight to these providers over an encrypted connection:</p>
+    <p>For Word, Excel and PowerPoint ↔ PDF conversion, CAD drawing (DWG, DXF, DWF) conversion, OCR (text recognition), PDF repair and cloud compression, your file is sent from your browser straight to these providers over an encrypted connection:</p>
     <ul>
       <li>
         iLovePDF (Spain): <a href="https://www.ilovepdf.com/help/privacy">privacy policy</a>

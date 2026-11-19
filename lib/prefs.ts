@@ -102,7 +102,8 @@ export const readingPref = pref<ReadingState>("reading", {});
 /** Cloud conversions used today; the free limit mirrors the app's. */
 export const cloudUsagePref = pref<{ day: string; count: number }>("cloudUsage", { day: "", count: 0 });
 export const FREE_CLOUD_PER_DAY = 5;
-export const FREE_MAX_MB = 100;
+/** Largest file the cloud tools accept (the browser tools have no limit of their own). */
+export const FREE_MAX_MB = 250;
 
 export function cloudRemaining(): number {
   const u = cloudUsagePref.get();

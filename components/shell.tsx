@@ -72,7 +72,7 @@ function ToolsPanel({ onPick }: { onPick: () => void }) {
   const t = useT();
   return (
     <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))_260px]">
-      {[["organize", "optimize"], ["convertTo", "convertFrom"], ["edit", "security"]].map((col) => (
+      {[["organize", "optimize"], ["convertTo", "convertFrom"], ["cad", "edit", "security"]].map((col) => (
         <div key={col.join()} className="grid content-start gap-6">
           {col.map((c) => {
             const cat = CATEGORIES.find((x) => x.id === c)!;
@@ -289,7 +289,7 @@ export function SiteFooter() {
           <AppStoreBadge className="mt-5" />
         </div>
         {col(t("webOrganizeTools"), tools(["organize", "optimize"]))}
-        {col(t("webConvertTools"), tools(["convertTo", "convertFrom"]))}
+        {col(t("webConvertTools"), tools(["convertTo", "convertFrom", "cad"]))}
         {col(t("webEditTools"), [...tools(["edit", "security"]), { href: toolHref("ai"), label: t("toolAi") }])}
         <div className="grid content-start gap-10">
           {col(t("webFooterCompany"), [

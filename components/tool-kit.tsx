@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { CloudError, type CloudStage } from "@/lib/cloud";
 import { type T, useT } from "@/lib/i18n";
 import { kindOf, type LibFile, library, useLibrary } from "@/lib/library";
-import { isEncrypted, NeedsPassword, WrongPassword } from "@/lib/pdf/engine";
+import { isEncryptedFile, NeedsPassword, WrongPassword } from "@/lib/pdf/engine";
 import { openPdf, PasswordRequired } from "@/lib/pdf/render";
 import { cloudRemaining, cloudUsagePref, FREE_CLOUD_PER_DAY, FREE_MAX_MB, rememberTool, useHydrated, usePref } from "@/lib/prefs";
 import { CATEGORIES, categoryColor, type ToolDef, toolHref, TOOLS } from "@/lib/tools";
@@ -52,11 +52,10 @@ const nextKey = () => `in${++seq}`;
 export async function inspect(file: File, password?: string): Promise<{ pages?: number; encrypted: boolean; needsPassword: boolean }> {
   if (kindOf(file) !== "pdf") return { encrypted: false, needsPassword: false };
   try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const doc = await openPdf(bytes, password);
+    const doc = await openPdf(file, password);
     const pages = doc.numPages;
     void doc?.loadingTask.destroy();
-    return { pages, encrypted: !!password || (await isEncrypted(bytes)), needsPassword: false };
+    return { pages, encrypted: !!password || (await isEncryptedFile(file)), needsPassword: false };
   } catch (e) {
     if (e instanceof PasswordRequired) return { encrypted: true, needsPassword: true };
     throw e;

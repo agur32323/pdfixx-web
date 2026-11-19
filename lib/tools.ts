@@ -1,5 +1,8 @@
 import {
   Combine,
+  DraftingCompass,
+  ImageDown,
+  PencilRuler,
   FileImage,
   FileSpreadsheet,
   FileText,
@@ -27,7 +30,7 @@ import {
 
 import type { StringKey } from "./i18n/strings";
 
-export type Category = "ai" | "organize" | "optimize" | "convertTo" | "convertFrom" | "edit" | "security";
+export type Category = "ai" | "organize" | "optimize" | "convertTo" | "convertFrom" | "cad" | "edit" | "security";
 
 export type ToolDef = {
   id: string;
@@ -106,6 +109,10 @@ export const TOOLS: ToolDef[] = [
   },
   { id: "pdf_ppt", slug: "pdf-to-powerpoint", category: "convertFrom", icon: MonitorPlay, title: "toolPdfToPpt", sub: "toolPdfToPptSub", cloud: true, accept: PDF },
 
+  { id: "dwg_pdf", slug: "dwg-to-pdf", category: "cad", icon: DraftingCompass, title: "webToolDwgPdf", sub: "webToolDwgPdfSub", cloud: true, accept: ".dwg,.dxf,.dwf" },
+  { id: "dxf_pdf", slug: "dxf-to-pdf", category: "cad", icon: PencilRuler, title: "webToolDxfPdf", sub: "webToolDxfPdfSub", cloud: true, accept: ".dxf,.dwg,.dwf" },
+  { id: "cad_image", slug: "dwg-to-image", category: "cad", icon: ImageDown, title: "webToolCadImage", sub: "webToolCadImageSub", cloud: true, accept: ".dwg,.dxf,.dwf" },
+
   { id: "annotate", slug: "edit-pdf", category: "edit", icon: PenLine, title: "toolAnnotate", sub: "toolAnnotateSub", accept: PDF },
   { id: "sign", slug: "sign-pdf", category: "edit", icon: Signature, title: "toolSign", sub: "toolSignSub", accept: PDF },
   { id: "watermark", slug: "watermark-pdf", category: "edit", icon: Stamp, title: "toolWatermark", sub: "toolWatermarkSub", accept: PDF },
@@ -120,6 +127,7 @@ export const CATEGORIES: { id: Category; title: StringKey; color: string }[] = [
   { id: "optimize", title: "catOptimize", color: "var(--optimize)" },
   { id: "convertTo", title: "catConvertTo", color: "var(--to-pdf)" },
   { id: "convertFrom", title: "catConvertFrom", color: "var(--from-pdf)" },
+  { id: "cad", title: "webCatCad", color: "var(--cad)" },
   { id: "edit", title: "catEdit", color: "var(--edit)" },
   { id: "security", title: "catSecurity", color: "var(--security)" },
 ];

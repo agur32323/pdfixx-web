@@ -1,6 +1,6 @@
 "use client";
 
-import { FileSpreadsheet, FileText, File as FileIcon, Image as ImageIcon, Lock, Presentation } from "lucide-react";
+import { DraftingCompass, FileSpreadsheet, FileText, File as FileIcon, Image as ImageIcon, Lock, Presentation } from "lucide-react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useEffect, useRef, useState } from "react";
 
@@ -22,6 +22,7 @@ function OfficeIcon({ name }: { name: string }) {
   if (["xls", "xlsx", "ods"].includes(ext)) return <FileSpreadsheet className="size-8 text-[#1d7044]" />;
   if (["ppt", "pptx", "odp"].includes(ext)) return <Presentation className="size-8 text-[#d24726]" />;
   if (["doc", "docx", "odt", "rtf"].includes(ext)) return <FileText className="size-8 text-[#2b579a]" />;
+  if (["dwg", "dxf", "dwf"].includes(ext)) return <DraftingCompass className="size-8 text-[color:var(--cad)]" />;
   return <FileIcon className="size-8 text-fg-3" />;
 }
 
