@@ -50,9 +50,10 @@ export async function POST(req: Request) {
       if (body.password) params.push({ Name: "Password", Value: body.password });
     }
     for (const [k, v] of Object.entries(body.options ?? {})) if (OPTIONS[k]?.(v)) params.push({ Name: k, Value: v });
-    return fetch(`https://v2.convertapi.com/convert/${body.endpoint}?Secret=${encodeURIComponent(secret)}`, {
+    // The token goes in the header (ConvertAPI's recommended way), not in the URL.
+    return fetch(`https://v2.convertapi.com/convert/${body.endpoint}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
       body: JSON.stringify({ Parameters: params }),
       cache: "no-store",
     });
@@ -63,7 +64,8 @@ export async function POST(req: Request) {
   if (res.status === 500 && fromPdf) res = await convert("force");
   if (!res.ok) {
     const status = res.status;
-    const error = status === 401 || status === 403 ? "key" : status === 402 || status === 429 ? "quota" : status === 400 || status === 415 ? "unsupported" : "server";
+    // 401: bad token. 403: no conversions left on the plan.
+    const error = status === 401 ? "key" : status === 402 || status === 403 || status === 429 ? "quota" : status === 400 || status === 415 ? "unsupported" : "server";
     return json({ error }, 502);
   }
   const data = (await res.json()) as { Files?: { FileName: string; Url: string }[] };
