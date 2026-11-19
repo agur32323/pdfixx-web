@@ -1,26 +1,346 @@
 @import "tailwindcss";
 
+/* Colors match the mobile app (lib/core/theme.dart). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #e8394d;
+  --brand-deep: #c81e3a;
+  --violet: #6d3bf5;
+  --organize: #e8394d;
+  --optimize: #12b76a;
+  --to-pdf: #f79009;
+  --from-pdf: #2e90fa;
+  --edit: #7a5af8;
+  --security: #0e9384;
+  --ai: #6d3bf5;
+  --success: #12b76a;
+  --danger: #d92d20;
+
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-alt: #f0f1f4;
+  --border: #e6e8ec;
+  --fg: #101828;
+  --fg-2: #667085;
+  --fg-3: #98a2b3;
+  --overlay: rgb(16 24 40 / 0.45);
+  --shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-lg: 0 12px 32px -8px rgb(16 24 40 / 0.18), 0 4px 8px -4px rgb(16 24 40 / 0.08);
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --tabbar-h: 64px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c0d10;
+  --surface: #16181d;
+  --surface-alt: #1f2228;
+  --border: #2a2e36;
+  --fg: #f5f6f7;
+  --fg-2: #a0a7b4;
+  --fg-3: #6b7280;
+  --overlay: rgb(0 0 0 / 0.6);
+  --shadow: 0 0 0 1px rgb(255 255 255 / 0.02);
+  --shadow-lg: 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-violet: var(--violet);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-line: var(--border);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", Roboto, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Segoe UI", Roboto, sans-serif;
+  --shadow-card: var(--shadow);
+  --shadow-float: var(--shadow-lg);
+  --ease-out: var(--ease-out);
+  --ease-in-out: var(--ease-in-out);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+button,
+a,
+[role="button"],
+label {
+  touch-action: manipulation;
+}
+
+button,
+[role="button"],
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Press feedback for anything tappable. */
+.press {
+  transition: transform 160ms var(--ease-out), background-color 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+.press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #ee4b5e 0%, var(--brand-deep) 100%);
+}
+.ai-gradient {
+  background: linear-gradient(100deg, var(--violet) 0%, #b23ec0 55%, var(--brand) 100%);
+}
+.pro-gradient {
+  background: linear-gradient(135deg, var(--violet) 0%, var(--brand) 100%);
+}
+
+.scroll-area {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Elements that fade in once when they mount. */
+.enter {
+  transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    transition: opacity 200ms ease;
+    @starting-style {
+      transform: none;
+    }
+  }
+  .press:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* pdf.js text layer: transparent text over the canvas so it can be selected
+   and searched. */
+.textLayer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  opacity: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  z-index: 2;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+.textLayer .markedContent {
+  display: contents;
+}
+.textLayer ::selection {
+  background: rgb(46 144 250 / 0.3);
+}
+.textLayer br::selection {
+  background: transparent;
+}
+.textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+.textLayer.selecting .endOfContent {
+  top: 0;
+}
+
+/* Night mode for the reader: invert the page, keep hues. */
+.night canvas {
+  filter: invert(0.92) hue-rotate(180deg);
+}
+
+/* Long-form content pages (privacy, guides). */
+.prose-page h1 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+.prose-page h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 2rem 0 0.6rem;
+  letter-spacing: -0.01em;
+}
+.prose-page p,
+.prose-page li {
+  color: var(--fg-2);
+  line-height: 1.7;
+}
+.prose-page p + p {
+  margin-top: 0.75rem;
+}
+.prose-page ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.prose-page ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.prose-page a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-page strong {
+  color: var(--fg);
+}
+
+/* Desktop dialogs (phones use vaul's sheet). Modals scale from the centre. */
+.sheet-overlay {
+  transition: opacity 200ms ease;
+  @starting-style {
+    opacity: 0;
+  }
+}
+.sheet-panel {
+  transition: opacity 220ms var(--ease-out), transform 260ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel {
+    @starting-style {
+      transform: none;
+    }
+  }
+}
+
+/* pdf.js layout variables and rotation of the text layer. */
+:root {
+  --scale-round-x: 1px;
+  --scale-round-y: 1px;
+}
+.textLayer[data-main-rotation="90"] {
+  transform: rotate(90deg) translateY(-100%);
+}
+.textLayer[data-main-rotation="180"] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+.textLayer[data-main-rotation="270"] {
+  transform: rotate(270deg) translateX(-100%);
+}
+.textLayer .hit {
+  background: rgb(247 144 9 / 0.45);
+  border-radius: 2px;
+  color: transparent;
+}
+
+/* Header tools menu: drops from the header, origin at the top. */
+.mega-panel {
+  transform-origin: top center;
+  transition: opacity 180ms var(--ease-out), transform 180ms var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.99);
+  }
+}
+
+/* Soft brand glow behind the hero. */
+.hero-glow {
+  background:
+    radial-gradient(60% 50% at 20% 0%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 70%),
+    radial-gradient(50% 45% at 85% 10%, color-mix(in srgb, var(--violet) 14%, transparent), transparent 70%);
+}
+.grid-bg {
+  background-image: linear-gradient(to right, color-mix(in srgb, var(--fg) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--fg) 5%, transparent) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(70% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+/* Lift for cards on devices that can hover. */
+@media (hover: hover) and (pointer: fine) {
+  .lift {
+    transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
 }

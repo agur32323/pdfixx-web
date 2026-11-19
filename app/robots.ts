@@ -1,11 +1,10 @@
-import { MetadataRoute } from "next";
+import type { MetadataRoute } from "next";
+
+import { SITE_URL } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-    },
-    sitemap: "https://pdfixx-web.vercel.app/sitemap.xml",
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/view", "/files", "/settings"] },
+    sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
