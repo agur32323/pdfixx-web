@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: "PDFixx", images: ["/logo.png"] },
   twitter: { card: "summary" },
   formatDetection: { telephone: false },
+  // Lets AdSense verify the site by meta tag as well as by its script and ads.txt.
+  other: { "google-adsense-account": "ca-pub-1336089357343296" },
 };
 
 export const viewport: Viewport = {
